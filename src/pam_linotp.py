@@ -77,6 +77,86 @@ import urllib2
 import pwd
 import ssl
 
+from ctypes import CDLL, POINTER, Structure, CFUNCTYPE, cast, pointer, sizeof, byref
+from ctypes import c_void_p, c_uint, c_char_p, c_char, c_int
+from ctypes.util import find_library
+
+LIBPAM = CDLL(find_library("pam"))
+
+PAM_CHAUTHTOK = LIBPAM.pam_chauthtok
+PAM_CHAUTHTOK.restype = c_int
+PAM_CHAUTHTOK.argtypes = [PamHandle, c_int]
+
+PAM_SETCRED = LIBPAM.pam_setcred
+PAM_SETCRED.restype = c_int
+PAM_SETCRED.argtypes = [PamHandle, c_int]
+
+## PAM CONSTANTS
+PAM_SUCCESS=0
+PAM_OPEN_ERR=1
+PAM_SYMBOL_ERR=2
+PAM_SERVICE_ERR=3
+PAM_SYSTEM_ERR=4
+PAM_BUF_ERR=5
+PAM_PERM_DENIED=6
+PAM_AUTH_ERR=7
+PAM_CRED_INSUFFICIENT=8
+PAM_AUTHINFO_UNAVAIL=9
+PAM_USER_UNKNOWN=10
+PAM_MAXTRIES=11
+PAM_NEW_AUTHTOK_REQD=12
+PAM_ACCT_EXPIRED=13
+PAM_SESSION_ERR=14
+PAM_CRED_UNAVAIL=15
+PAM_CRED_EXPIRED=16
+PAM_CRED_ERR=17
+PAM_NO_MODULE_DATA=18
+PAM_CONV_ERR=19
+PAM_AUTHTOK_ERR=20
+PAM_AUTHTOK_RECOVER_ERR=21
+PAM_AUTHTOK_RECOVERY_ERR=21
+PAM_AUTHTOK_LOCK_BUSY=22
+PAM_AUTHTOK_DISABLE_AGING=23
+PAM_TRY_AGAIN=24
+PAM_IGNORE=25
+PAM_ABORT=26
+PAM_AUTHTOK_EXPIRED=27
+PAM_MODULE_UNKNOWN=28
+PAM_BAD_ITEM=29
+PAM_CONV_AGAIN=30
+PAM_INCOMPLETE=31
+PAM_SERVICE=1
+PAM_USER=2
+PAM_TTY=3
+PAM_RHOST=4
+PAM_CONV=5
+PAM_AUTHTOK=6
+PAM_OLDAUTHTOK=7
+PAM_RUSER=8
+PAM_USER_PROMPT=9
+PAM_FAIL_DELAY=10
+PAM_XDISPLAY=11
+PAM_XAUTHDATA=12
+PAM_AUTHTOK_TYPE=13
+PAM_SILENT=0x8000
+PAM_DISALLOW_NULL_AUTHTOK=0x0001
+PAM_ESTABLISH_CRED=0x0002
+PAM_DELETE_CRED=0x0004
+PAM_REINITIALIZE_CRED=0x0008
+PAM_REFRESH_CRED=0x0010
+PAM_CHANGE_EXPIRED_AUTHTOK=0x0020
+PAM_DATA_SILENT=0x40000000
+PAM_PROMPT_ECHO_OFF=1
+PAM_PROMPT_ECHO_ON=2
+PAM_ERROR_MSG=3
+PAM_TEXT_INFO=4
+PAM_RADIO_TYPE=5
+PAM_BINARY_PROMPT=7
+PAM_MAX_NUM_MSG=32
+PAM_MAX_MSG_SIZE=512
+PAM_MAX_RESP_SIZE=512
+
+
 LINOTP_FAIL = ":-/"
 LINOTP_OK = ":-)"
 LINOTP_REJECT = ":-("
@@ -271,9 +351,7 @@ def check_response( pamh, ret, user, config ):
 
 def pam_sm_setcred( pamh, flags, argv ):
     """  pam_sm_setcred  """
-    syslog.syslog( syslog.LOG_INFO,
-                  "Please note: pam_linotp does not support setcred" )
-    return pamh.PAM_CRED_UNAVAIL
+    return PAM_SETCRED( pamh, flags )
 
 def pam_sm_acct_mgmt( pamh, flags, argv ):
     """  pam_sm_acct_mgmt  """
@@ -282,10 +360,9 @@ def pam_sm_acct_mgmt( pamh, flags, argv ):
     return pamh.PAM_SERVICE_ERR
 
 def pam_sm_chauthtok( pamh, flags, argv ):
-    """ pam_sm_chauthtok """
-    syslog.syslog( syslog.LOG_INFO,
-                  "Please note: pam_linotp does not support chauthtok" )
-    return pamh.PAM_SERVICE_ERR
+    # pam_sm_chauthtok 
+    # def change_password(username, password=None, service='login', encoding='utf-8'):  
+    return PAM_CHAUTHTOK( pamh, flags )
 
 def pam_sm_open_session( pamh, flags, argv ):
     """ pam_sm_open_session """

@@ -69,7 +69,14 @@ Paramters to the module are:
 
 Happy Authenticating!
 
-'''
+__all__ = [
+    'PAMError',
+    'authenticate',
+    'open_session',
+    'close_session',
+    'check_account',
+    'change_password',
+]
 
 import syslog
 import urllib
@@ -80,16 +87,30 @@ import ssl
 from ctypes import CDLL, POINTER, Structure, CFUNCTYPE, cast, pointer, sizeof, byref
 from ctypes import c_void_p, c_uint, c_char_p, c_char, c_int
 from ctypes.util import find_library
+import getpass
+import sys
 
 LIBPAM = CDLL(find_library("pam"))
 
 PAM_CHAUTHTOK = LIBPAM.pam_chauthtok
 PAM_CHAUTHTOK.restype = c_int
-PAM_CHAUTHTOK.argtypes = [PamHandle, c_int]
+PAM_CHAUTHTOK.argtypes = [c_void_p, c_int]
 
 PAM_SETCRED = LIBPAM.pam_setcred
 PAM_SETCRED.restype = c_int
-PAM_SETCRED.argtypes = [PamHandle, c_int]
+PAM_SETCRED.argtypes = [c_void_p, c_int]
+
+PAM_ACCT_MGMT = LIBPAM.pam_acct_mgmt
+PAM_ACCT_MGMT.restype = c_int
+PAM_ACCT_MGMT.argtypes = [c_void_p, c_int]
+
+PAM_OPEN_SESSION = LIBPAM.pam_open_session
+PAM_OPEN_SESSION.restype = c_int
+PAM_OPEN_SESSION.argtypes = [c_void_p, c_int]
+
+PAM_CLOSE_SESSION = LIBPAM.pam_close_session
+PAM_CLOSE_SESSION.restype = c_int
+PAM_CLOSE_SESSION.argtypes = [c_void_p, c_int]
 
 ## PAM CONSTANTS
 PAM_SUCCESS=0
@@ -351,29 +372,27 @@ def check_response( pamh, ret, user, config ):
 
 def pam_sm_setcred( pamh, flags, argv ):
     """  pam_sm_setcred  """
-    return PAM_SETCRED( pamh, flags )
+    c_void_p _handle_ = pamh.pamh
+    return PAM_SETCRED( handle, flags )
 
 def pam_sm_acct_mgmt( pamh, flags, argv ):
     """  pam_sm_acct_mgmt  """
-    syslog.syslog( syslog.LOG_INFO,
-                  "Please note: pam_linotp does not support acct_mgmt" )
-    return pamh.PAM_SERVICE_ERR
+    c_void_p _handle_ = pamh.pamh
+    return PAM_ACCT_MGMT( handle, flags )
 
 def pam_sm_chauthtok( pamh, flags, argv ):
     # pam_sm_chauthtok 
     # def change_password(username, password=None, service='login', encoding='utf-8'):  
-    return PAM_CHAUTHTOK( pamh, flags )
+    c_void_p _handle_ = pamh.pamh
+    return PAM_CHAUTHTOK( handle, flags )
 
 def pam_sm_open_session( pamh, flags, argv ):
-    """ pam_sm_open_session """
-    syslog.syslog( syslog.LOG_INFO,
-                  "Please note: pam_linotp does not support open_session" )
-    return pamh.PAM_SERVICE_ERR
+    c_void_p _handle_ = pamh.pamh
+    return PAM_OPEN_SESSION( handle, flags )
 
 def pam_sm_close_session( pamh, flags, argv ):
     """ pam_sm_close_session """
-    syslog.syslog( syslog.LOG_INFO,
-                  "Please note: pam_linotp does not support close_session" )
-    return pamh.PAM_SERVICE_ERR
+    c_void_p _handle_ = pamh.pamh
+    return PAM_CLOSE_SESSION( handle, flags )
 
 ##eof##########################################################################
